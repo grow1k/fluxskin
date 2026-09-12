@@ -5,12 +5,17 @@
  * project. It is shared by Vite and Nitro and only emits standard web metadata.
  */
 
+/** @typedef {{ title?: string, description?: string }} SiteMeta */
+/** @typedef {{ host?: string, site?: SiteMeta, documentTitle?: string }} HeadOptions */
+/** @typedef {{ push: (chunk: Uint8Array|string) => Uint8Array[], flush: () => Uint8Array[] }} HeadInjector */
+
 export const FLUXSKIN_NAME = "FluxSkin";
 export const FLUXSKIN_URL = "https://fluxskin.ru";
 export const FLUXSKIN_MANIFEST = "/manifest.webmanifest";
 export const FLUXSKIN_ICON = "/favicon.svg";
 export const FLUXSKIN_OG_IMAGE = "/og.jpg";
 
+/** @param {unknown} value */
 export function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -20,6 +25,7 @@ export function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+/** @param {unknown} hostHeader */
 export function publicAppHost(hostHeader) {
   const host = String(hostHeader ?? "")
     .split(",")[0]
@@ -32,6 +38,7 @@ export function publicAppHost(hostHeader) {
   return host;
 }
 
+/** @param {unknown} hostHeader */
 export function resolvePublicHost(hostHeader) {
   return (
     publicAppHost(process.env?.VITE_PUBLIC_HOSTNAME) ||
@@ -40,6 +47,7 @@ export function resolvePublicHost(hostHeader) {
   );
 }
 
+/** @param {unknown} pathname */
 export function isDocumentPath(pathname) {
   const path = String(pathname ?? "");
   return (
@@ -69,6 +77,7 @@ export function renderWebManifest() {
   );
 }
 
+/** @param {string} appName */
 export function pwaHeadTags(appName = FLUXSKIN_NAME) {
   return [
     `<link rel="manifest" href="${FLUXSKIN_MANIFEST}">`,
@@ -81,20 +90,23 @@ export function pwaHeadTags(appName = FLUXSKIN_NAME) {
   ];
 }
 
+/** @param {string} html */
 function readTitle(html) {
   const match = String(html ?? "").match(/<title\b[^>]*>([^<]*)<\/title>/i);
   return match ? match[1].trim() : FLUXSKIN_NAME;
 }
 
+/** @param {string} html */
 function metaTagsToRemove(html) {
   return String(html).replace(/<meta\b[^>]*>/gi, (tag) => {
     const attrs = [...tag.matchAll(/\b(property|name)\s*=\s*["']([^"']+)["']/gi)];
-    return attrs.some(([, key, value]) =>
+    return attrs.some(([, , value]) =>
       /^(og:|twitter:)/i.test(value) || /^(description|theme-color)$/i.test(value),
     ) ? "" : tag;
   });
 }
 
+/** @param {HeadOptions} options */
 export function ogHeadTags({ host = "", site = {}, documentTitle = FLUXSKIN_NAME } = {}) {
   const title = String(site.title ?? documentTitle ?? FLUXSKIN_NAME).trim() || FLUXSKIN_NAME;
   const description = String(site.description ?? "CS2 skins, inventory and loadouts in FluxSkin.").trim();
@@ -103,7 +115,7 @@ export function ogHeadTags({ host = "", site = {}, documentTitle = FLUXSKIN_NAME
   return [
     '<meta name="twitter:card" content="summary_large_image">',
     `<meta name="description" content="${escapeHtml(description)}">`,
-    `<meta property="og:type" content="website">`,
+    '<meta property="og:type" content="website">',
     `<meta property="og:site_name" content="${escapeHtml(FLUXSKIN_NAME)}">`,
     `<meta property="og:title" content="${escapeHtml(title)}">`,
     `<meta property="og:description" content="${escapeHtml(description)}">`,
@@ -114,17 +126,22 @@ export function ogHeadTags({ host = "", site = {}, documentTitle = FLUXSKIN_NAME
   ];
 }
 
+/** @param {string} html @param {HeadOptions} options */
 export function injectFluxSkinHead(html, { host = "", site = {} } = {}) {
   const source = String(html);
   if (!/<head\b[^>]*>/i.test(source)) return source;
   const cleaned = metaTagsToRemove(source);
   const title = readTitle(cleaned);
-  const tags = [...pwaHeadTags(site.title || FLUXSKIN_NAME), ...ogHeadTags({ host, site, documentTitle: title })];
+  const tags = [
+    ...pwaHeadTags(site.title || FLUXSKIN_NAME),
+    ...ogHeadTags({ host, site, documentTitle: title }),
+  ];
   const head = tags.join("\n    ");
   if (cleaned.includes("<!-- fluxskin-head -->")) return cleaned;
   return cleaned.replace(/<\/head>/i, `    <!-- fluxskin-head -->\n    ${head}\n  </head>`);
 }
 
+/** @param {HeadOptions} options @returns {HeadInjector} */
 export function createHeadInjector({ host = "", site = {} } = {}) {
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
@@ -132,14 +149,13 @@ export function createHeadInjector({ host = "", site = {} } = {}) {
   let injected = false;
   const marker = "</head>";
   return {
+    /** @param {Uint8Array|string} chunk */
     push(chunk) {
-      if (injected) return [chunk];
+      if (injected) return [typeof chunk === "string" ? encoder.encode(chunk) : chunk];
       pending += typeof chunk === "string" ? chunk : decoder.decode(chunk, { stream: true });
       const index = pending.toLowerCase().indexOf(marker);
       if (index < 0) return [];
-      const before = pending.slice(0, index);
-      const after = pending.slice(index);
-      const html = injectFluxSkinHead(before + after, { host, site });
+      const html = injectFluxSkinHead(pending, { host, site });
       injected = true;
       return [encoder.encode(html)];
     },
