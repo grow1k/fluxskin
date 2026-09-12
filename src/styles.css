@@ -1,0 +1,103 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Syne", "IBM Plex Sans", ui-sans-serif, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+  --color-background: #09090b;
+  --color-foreground: #f4f4f5;
+  --color-card: #121214;
+  --color-card-2: #18181b;
+  --color-muted: #71717a;
+  --color-muted-foreground: #a1a1aa;
+  --color-border: #27272a;
+  --color-ring: #d4d8de;
+  --color-primary: #eceff3;
+  --color-primary-foreground: #09090b;
+  --color-destructive: #e11d48;
+  --color-ok: #34d399;
+
+  --color-rarity-consumer: #b0c3d9;
+  --color-rarity-industrial: #5e98d9;
+  --color-rarity-milspec: #4b69ff;
+  --color-rarity-restricted: #8847ff;
+  --color-rarity-classified: #d32ce6;
+  --color-rarity-covert: #eb4b4b;
+  --color-rarity-gold: #e4ae33;
+
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1, h2, h3 {
+    text-wrap: balance;
+    font-family: var(--font-display);
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@keyframes flux-reel {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.rarity-bar {
+  height: 2px;
+  width: 100%;
+}
+
+.rarity-consumer { color: var(--color-rarity-consumer); }
+.rarity-industrial { color: var(--color-rarity-industrial); }
+.rarity-milspec { color: var(--color-rarity-milspec); }
+.rarity-restricted { color: var(--color-rarity-restricted); }
+.rarity-classified { color: var(--color-rarity-classified); }
+.rarity-covert { color: var(--color-rarity-covert); }
+.rarity-gold { color: var(--color-rarity-gold); }
+
+.rarity-bar.rarity-consumer { background-color: var(--color-rarity-consumer); }
+.rarity-bar.rarity-industrial { background-color: var(--color-rarity-industrial); }
+.rarity-bar.rarity-milspec { background-color: var(--color-rarity-milspec); }
+.rarity-bar.rarity-restricted { background-color: var(--color-rarity-restricted); }
+.rarity-bar.rarity-classified { background-color: var(--color-rarity-classified); }
+.rarity-bar.rarity-covert { background-color: var(--color-rarity-covert); }
+.rarity-bar.rarity-gold { background-color: var(--color-rarity-gold); }

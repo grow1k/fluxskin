@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Fluxskin",
+      "hasCanvas": false,
+      "bodyTextLen": 1481,
+      "bodyTextHash": "dc7fe451b357969783e2b3300ebe04b0d262b39155d31c1cfccd20451993fc9c",
+      "bodyTextPrefix": "Fluxskin Каталог Как это работает FAQ Войти FLUXSKIN.RU Скины CS",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Fluxskin",
+      "hasCanvas": false,
+      "bodyTextLen": 1452,
+      "bodyTextHash": "51339a07e20104116f40866f00946bf159f65aaf66851d7b0e851d7633d87ce6",
+      "bodyTextPrefix": "Fluxskin Войти FLUXSKIN.RU Скины CS2. На твоих условиях. Собирай",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
