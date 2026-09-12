@@ -1,45 +1,43 @@
 #!/usr/bin/env node
 /**
- * Brand-asset gate shared by browser-smoke.mjs (and unit-testable without a
- * browser): a canvas app is almost always a game / visually rich app, and
- * those must ship a custom share card — the default og.grok.me placeholder is
- * not acceptable for them (see .grok/skills/og/SKILL.md).
+ * Brand-asset gate: validates that canvas apps ship a custom share card.
+ * The default FluxSkin placeholder is not acceptable for games and visually
+ * rich apps (see src/lib/og/site.json).
  *
- * Games must also set type=x:game in src/lib/og/site.json so the platform
- * injector emits og:type for X game-card unfurls, and public/x-banner.jpg for
- * the 50:11 X feed card. A card file is enough for bake to emit /og.jpg, but
- * brand-check still requires site.json `"card": "custom"` so the agent-facing
- * contract stays explicit.
+ * Canvas apps must also set type=x:game in src/lib/og/site.json so the
+ * platform injector emits og:type for X game-card unfurls, and
+ * public/x-banner.jpg for the 50:11 X feed card. A card file is enough
+ * for the build to emit /og.jpg, but brand-check still requires site.json
+ * `"card": "custom"` so the contract stays explicit.
  *
- * Checked on the filesystem (not the served head) so preview and mid-scaffold
- * workspaces are judged the same way.
+ * Checked on the filesystem (not the served head) so preview and
+ * mid-scaffold workspaces are judged the same way.
  *
- * Also runnable, so the background brand task can check its own work before it
+ * Also runnable, so the brand task can check its own work before it
  * reports (the parent answers without waiting for it):
  *
  *   node scripts/brand-check.mjs [--game] [--placeholder-ok] [--root <dir>]
  *
- * That run judges the files on disk even though the task is holding the
- * og-pending marker; the marker only silences what the parent's gates see. It
- * also requires the custom card: its caller is normally the pass that exists to
- * produce one, so the placeholder the parent tolerates for a plain utility is a
- * failed pass here. --placeholder-ok is for the other launch — a pass doing
- * favicon, PWA icons and title for a plain utility that keeps the og.grok.me
+ * That run judges the files on disk and also requires the custom card:
+ * its caller is normally the pass that exists to produce one, so the
+ * placeholder the parent tolerates for a plain utility is a failed pass
+ * here. --placeholder-ok is for the other launch — a pass doing favicon,
+ * PWA icons and title for a plain utility that keeps the FluxSkin default
  * card — where no card is the expected verdict rather than a failure.
  */
 import { existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { OG_SITE_REL_PATH, readOgSite, siteHasCustomCard } from "./grok-pwa-shared.mjs";
+import { OG_SITE_REL_PATH, readOgSite, siteHasCustomCard } from "./fluxskin-pwa-shared.mjs";
 
 // Over this, link scrapers (X card previews included) time out or skip the
-// image, so the card silently fails to unfurl. The og skill's JPEG contract
+// image, so the card silently fails to unfurl. The og card's JPEG contract
 // (ffmpeg -q:v 4, ~150-300 KB) exists precisely to stay under it.
 export const MAX_CARD_BYTES = 600 * 1024;
 
 // Written by the brand task while it generates, removed when it finishes.
-export const OG_PENDING_REL_PATH = ".grok/og-pending";
-// A Stop mid-generation leaves the marker behind, so the demotion expires
+export const OG_PENDING_REL_PATH = ".fluxskin/og-pending";
+// A stop mid-generation leaves the marker behind, so the demotion expires
 // instead of hiding a missing card forever on that workspace.
 export const OG_PENDING_MAX_AGE_MS = 10 * 60 * 1000;
 
@@ -85,7 +83,7 @@ function brandWarningsOnDisk({
   workspaceRoot = "/workspace",
   cardRequired = false,
 }) {
-  const skillPath = join(workspaceRoot, ".grok/skills/og/SKILL.md");
+  const skillPath = join(workspaceRoot, "src/lib/og");
   const sitePath = join(workspaceRoot, OG_SITE_REL_PATH);
   const site = readOgSite(workspaceRoot);
   const cardPath = [
@@ -105,33 +103,33 @@ function brandWarningsOnDisk({
     if (!siteHasCustomCard(site)) {
       warnings.push(
         `BRAND WARNING: ${cardPath} exists but ${sitePath} is missing "card": "custom". `
-          + "Bake infers custom from the file, but set the flag in "
-          + `${sitePath} per ${skillPath} so identity is explicit.`,
+          + "The build infers custom from the file, but set the flag in "
+          + `${sitePath} so identity is explicit.`,
       );
     }
   } else if (hasCanvas) {
     warnings.push(
       `BRAND WARNING: this looks like a game/canvas app but ${workspaceRoot}/public/og.jpg `
         + "is missing. Games and visually rich apps must ship a custom 1200x630 share card "
-        + "built from the app's own art — the default og.grok.me placeholder card is not "
-        + `acceptable for them. You are not done: open ${skillPath} and finish the `
-        + "brand-asset pass.",
+        + "built from the app's own art — the default FluxSkin placeholder card is not "
+        + `acceptable for them. You are not done: finish the og card generation in `
+        + `${skillPath}.`,
     );
   } else if (cardRequired) {
     warnings.push(
       `BRAND WARNING: ${workspaceRoot}/public/og.jpg is missing and this pass exists to `
-        + "produce it. Generate the 1200x630 card from the app's own art and hand it over "
-        + `per ${skillPath}. If no image-generation tool is available in this session, `
-        + "report that instead of reporting a pass — the app keeps the og.grok.me "
-        + "placeholder.",
+        + "produce it. Generate the 1200x630 card from the app's own art and add it "
+        + `to ${skillPath}. If no image-generation tool is available in this session, `
+        + "report that instead of reporting a pass — the app keeps the default "
+        + "FluxSkin placeholder.",
     );
   } else {
     warnings.push(
-      "BRAND NOTE: no custom public/og.jpg — the platform will serve the og.grok.me placeholder. "
+      "BRAND NOTE: no custom public/og.jpg — the platform will serve the default FluxSkin placeholder. "
         + "Custom cards are the default for games of every kind (DOM board/word games included), "
         + "whimsical apps, creative tools, and brand-forward pages — only plain utilities "
         + "(converters, CRUD trackers, admin dashboards) keep the placeholder. If this app "
-        + `is not a plain utility, finish the brand-asset pass per ${skillPath}.`,
+        + `is not a plain utility, finish the og card generation in ${skillPath}.`,
     );
   }
 
@@ -139,20 +137,20 @@ function brandWarningsOnDisk({
     warnings.push(
       'BRAND WARNING: this looks like a game/canvas app but src/lib/og/site.json is missing '
         + '"type": "x:game". X uses og:type=x:game to present the unfurl as a game card — set '
-        + `it in ${sitePath} per ${skillPath}. Do not invent `
+        + `it in ${sitePath}. Do not invent `
         + "x:type or overload twitter:card as the game signal.",
     );
   }
 
   // Games with a custom link card must also ship the 50:11 X feed card.
-  // Skip while still on the og.grok.me placeholder — that pass has not started yet.
+  // Skip while still on the FluxSkin placeholder — that pass has not started yet.
   if (hasCanvas && cardPath !== undefined) {
     const bannerPath = join(workspaceRoot, "public/x-banner.jpg");
     if (!existsSync(bannerPath)) {
       warnings.push(
         `BRAND WARNING: this looks like a game/canvas app but ${bannerPath} is missing. `
           + "Games need a 50:11 X feed card (1200×264 JPEG) at public/x-banner.jpg — "
-          + `open ${skillPath} and finish the brand-asset pass.`,
+          + `finish the og card generation in ${skillPath}.`,
       );
     } else if (statSync(bannerPath).size > MAX_CARD_BYTES) {
       warnings.push(
