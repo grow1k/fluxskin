@@ -1,26 +1,33 @@
-import { authClient } from "./client";
-import { authEnabled } from "./client";
+import { authClient, authEnabled } from "./client";
 
-const DEV_USER = {
-  id: "dev-user",
-  displayName: "FluxSkin User",
-  email: "dev@fluxskin.local",
-  image: null,
+/** Normalized user shape used across the app, auth on or off. */
+export type AppUser = {
+  id: string;
+  displayName: string | null;
+  primaryEmail: string | null;
+  profileImageUrl: string | null;
+  /** True when this is the sandbox/dev fallback (auth not configured). */
+  isDevFallback: boolean;
 };
 
-type CurrentUser = typeof DEV_USER;
+/** Stable fallback user, used only when auth is disabled. */
+export const DEV_USER: AppUser = {
+  id: "dev-user",
+  displayName: "Dev User",
+  primaryEmail: "dev@example.com",
+  profileImageUrl: null,
+  isDevFallback: true,
+};
 
 export type CurrentUserState = {
-  user: CurrentUser | null;
+  user: AppUser | null;
   isPending: boolean;
 };
 
-/**
- * Read the current authenticated user. When auth is disabled, a local dev user
- * is returned synchronously; when enabled, Better Auth owns the session state.
- */
+/** Current user plus the Better Auth session loading state. */
 export function useCurrentUserState(): CurrentUserState {
   if (!authEnabled) return { user: DEV_USER, isPending: false };
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
   const { data, isPending } = authClient.useSession();
   const user = data?.user;
   return {
@@ -28,10 +35,15 @@ export function useCurrentUserState(): CurrentUserState {
       ? {
           id: user.id,
           displayName: user.name ?? null,
-          email: user.email ?? null,
-          image: user.image ?? null,
+          primaryEmail: user.email ?? null,
+          profileImageUrl: user.image ?? null,
+          isDevFallback: false,
         }
       : null,
     isPending,
   };
+}
+
+export function useCurrentUser(): AppUser | null {
+  return useCurrentUserState().user;
 }
