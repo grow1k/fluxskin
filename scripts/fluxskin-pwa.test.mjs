@@ -25,8 +25,8 @@ test("injects standard PWA and OG metadata", () => {
   const out = injectFluxSkinHead("<html><head><title>FluxSkin</title></head><body></body></html>", {
     host: "fluxskin.ru",
   });
-  assert.match(out, new RegExp(`href=\"${FLUXSKIN_MANIFEST}\"`));
-  assert.match(out, new RegExp(`content=\"https://fluxskin\\.ru${FLUXSKIN_OG_IMAGE}\"`));
+  assert.match(out, new RegExp(`href="${FLUXSKIN_MANIFEST}"`));
+  assert.match(out, new RegExp(`content="https://fluxskin\\.ru${FLUXSKIN_OG_IMAGE}"`));
   assert.match(out, /property="og:type" content="website"/);
   assert.match(out, /property="og:site_name" content="FluxSkin"/);
   assert.doesNotMatch(out, /grok/i);
@@ -45,7 +45,7 @@ test("replaces stale social metadata without duplicating it", () => {
 test("escapes site metadata", () => {
   const out = injectFluxSkinHead("<html><head></head></html>", {
     host: "fluxskin.ru",
-    site: { title: '"><script>alert(1)</script>', description: 'A & B' },
+    site: { title: '"><script>alert(1)</script>', description: "A & B" },
   });
   assert.match(out, /&quot;&gt;&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.match(out, /A &amp; B/);
